@@ -1,25 +1,25 @@
 package game;
 
 public class Door {
-    private String targetRoomFile;  // 예: "room2.csv"
+    private final int x;
+    private final int y;
+    private final String destinationPath;
 
-    public Door(String targetRoomFile) {
-        this.targetRoomFile = targetRoomFile;
+    public Door(int x, int y, String destinationPath) {
+        this.x = x;
+        this.y = y;
+        this.destinationPath = destinationPath;
     }
 
-    public String getTargetRoomFile() {
-        return targetRoomFile;
+    public int getX() {
+        return x;
     }
 
-    public boolean canPass(Hero hero) {
-        return hero.hasKey();
+    public int getY() {
+        return y;
     }
 
-    public void tryEnter(Hero hero) {
-        if (canPass(hero)) {
-            System.out.println("You unlock the door and move to " + targetRoomFile);
-        } else {
-            System.out.println("The door is locked. You need a key.");
-        }
+    public String getDestinationPath() {
+        return destinationPath;
     }
 }

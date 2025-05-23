@@ -1,86 +1,157 @@
 package game;
 
+import java.util.*;
 import java.io.*;
 
 public class Room {
-    private int rows;
-    private int cols;
-    private String[][] grid;
-    private String fileName;
+    private char[][] grid;
+    private int rows, cols;
+    private List<Monster> monsters = new ArrayList<>();
+    private List<Item> items = new ArrayList<>();
+    private List<Door> doors = new ArrayList<>();
 
-    public Room(String fileName) {
-        this.fileName = fileName;
-        loadRoom(fileName);
+    private int startX = 1, startY = 1;
+
+    public Room(String filename) {
+        loadFromCSV(filename);
     }
 
-    private void loadRoom(String fileName) {
-        try (BufferedReader reader = new BufferedReader(new FileReader(fileName))) {
-            String[] size = reader.readLine().split(",");
-            rows = Integer.parseInt(size[0].trim());
-            cols = Integer.parseInt(size[1].trim());
-
-            grid = new String[rows][cols];
+    public void loadFromCSV(String filename) {
+        try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
+            String[] size = br.readLine().split(",");
+            rows = Integer.parseInt(size[0]);
+            cols = Integer.parseInt(size[1]);
+            grid = new char[rows][cols];
 
             for (int i = 0; i < rows; i++) {
-                String[] line = reader.readLine().split(",");
+                String[] line = br.readLine().split(",");
                 for (int j = 0; j < cols; j++) {
-                    grid[i][j] = line[j].trim().isEmpty() ? " " : line[j].trim();
-                }
-            }
-        } catch (IOException e) {
-            System.out.println("Failed to load room: " + e.getMessage());
-        }
-    }
+                    char c = line[j].charAt(0);
+                    grid[i][j] = c;
 
-    public void printRoom(int heroRow, int heroCol) {
-        System.out.println("+---".repeat(cols) + "+");
-
-        for (int i = 0; i < rows; i++) {
-            System.out.print("|");
-            for (int j = 0; j < cols; j++) {
-                if (i == heroRow && j == heroCol) {
-                    System.out.print(" @ |");
-                } else {
-                    String cell = grid[i][j];
-                    if (cell.length() == 1) {
-                        System.out.print(" " + cell + " |");
-                    } else {
-                        System.out.print(cell.charAt(0) + " |"); // G:3 → G만 보이게
+                    switch (c) {
+                        case '@':
+                            startX = i;
+                            startY = j;
+                            grid[i][j] = ' ';
+                            break;
+                        case 'G':
+                            monsters.add(new Monster("Goblin", i, j, 3, 1, false));
+                            break;
+                        case 'O':
+                            monsters.add(new Monster("Orc", i, j, 8, 3, false));
+                            break;
+                        case 'T':
+                            monsters.add(new Monster("Troll", i, j, 15, 4, true));
+                            break;
+                        case 'S':
+                            items.add(new Weapon("Stick", 1, 'S'));
+                            break;
+                        case 'W':
+                            items.add(new Weapon("Weak Sword", 2, 'W'));
+                            break;
+                        case 'X':
+                            items.add(new Weapon("Strong Sword", 3, 'X'));
+                            break;
+                        case 'm':
+                            items.add(new Potion(6, 'm'));
+                            break;
+                        case 'B':
+                            items.add(new Potion(12, 'B'));
+                            break;
+                        case 'D':
+                            doors.add(new Door(i, j, "../rooms/room2.csv"));
+                            break;
                     }
                 }
             }
-            System.out.println("\n+---".repeat(cols) + "+");
-        }
-    }
-
-    public String getCell(int row, int col) {
-        return grid[row][col];
-    }
-
-    public void setCell(int row, int col, String value) {
-        grid[row][col] = value;
-    }
-
-    public int getRowCount() {
-        return rows;
-    }
-
-    public int getColCount() {
-        return cols;
-    }
-
-    public void saveRoom(String outputFile) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outputFile))) {
-            writer.write(rows + "," + cols + "\n");
-            for (int i = 0; i < rows; i++) {
-                for (int j = 0; j < cols; j++) {
-                    writer.write(grid[i][j]);
-                    if (j < cols - 1) writer.write(",");
-                }
-                writer.newLine();
-            }
         } catch (IOException e) {
-            System.out.println("Failed to save room: " + e.getMessage());
+            System.out.println("Error loading room file: " + filename);
         }
+    }
+
+    public void display(Hero hero) {
+        System.out.println("+-----------------------------+");
+        for (int i = 0; i < rows; i++) {
+            System.out.print("| ");
+            for (int j = 0; j < cols; j++) {
+                if (i == hero.getX() && j == hero.getY()) {
+                    System.out.print("@ ");
+                } else {
+                    System.out.print(grid[i][j] + " ");
+                }
+            }
+            System.out.println("|");
+        }
+        System.out.println("+-----------------------------+");
+    }
+
+    public boolean isWalkable(int x, int y) {
+        if (x < 0 || x >= rows || y < 0 || y >= cols) return false;
+        return grid[x][y] != '#' && grid[x][y] != '|';
+    }
+
+    public void checkInteractions(Hero hero) {
+        Iterator<Monster> mi = monsters.iterator();
+        while (mi.hasNext()) {
+            Monster m = mi.next();
+            if (isAdjacent(hero, m)) {
+                System.out.println("You are next to a " + m.getName() + " (HP: " + m.getHp() + ")");
+                System.out.print("Attack? (y/n): ");
+                Scanner s = new Scanner(System.in);
+                if (s.nextLine().equalsIgnoreCase("y")) {
+                    hero.attack(m);
+                    if (m.getHp() <= 0) {
+                        if (m.dropsKey()) {
+                            System.out.println("The Troll dropped a key!");
+                            hero.obtainKey();
+                        }
+                        mi.remove();
+                    }
+                }
+            }
+        }
+
+        Iterator<Item> ii = items.iterator();
+        while (ii.hasNext()) {
+            Item item = ii.next();
+            if (item instanceof Weapon && grid[hero.getX()][hero.getY()] == ((Weapon) item).getSymbol()) {
+                System.out.print("Switch to " + ((Weapon) item).getName() + "? (y/n): ");
+                Scanner s = new Scanner(System.in);
+                if (s.nextLine().equalsIgnoreCase("y")) {
+                    hero.pickUp(item);
+                    ii.remove();
+                }
+            } else if (item instanceof Potion && grid[hero.getX()][hero.getY()] == item.getSymbol()) {
+                hero.pickUp(item);
+                ii.remove();
+            }
+        }
+
+        for (Door d : doors) {
+            if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
+                if (hero.hasKey()) {
+                    System.out.println("You used the key to open the door.");
+                    System.out.println("Loading next room...");
+                    loadFromCSV(d.getDestinationPath());
+                } else {
+                    System.out.println("The door is locked. You need a key.");
+                }
+            }
+        }
+    }
+
+    private boolean isAdjacent(Hero h, Monster m) {
+        int dx = Math.abs(h.getX() - m.getX());
+        int dy = Math.abs(h.getY() - m.getY());
+        return (dx + dy == 1);
+    }
+
+    public int getHeroStartX() {
+        return startX;
+    }
+
+    public int getHeroStartY() {
+        return startY;
     }
 }
