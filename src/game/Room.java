@@ -132,6 +132,8 @@ public class Room {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
                 if (hero.hasKey()) {
                     System.out.println("You used the key to open the door.");
+                    saveToCSV("saves/run1/room1.csv"); // save the state
+
                     System.out.println("Loading next room...");
                     loadFromCSV(d.getDestinationPath());
                 } else {
@@ -141,6 +143,23 @@ public class Room {
         }
     }
 
+    public void saveToCSV(String path) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
+            bw.write(rows + "," + cols + "\n");
+            for (int i = 0; i < rows; i++) {
+                for (int j = 0; j < cols; j++) {
+                    bw.write(grid[i][j]);
+                    if (j < cols - 1) {
+                        bw.write(",");
+                    }
+                }
+                bw.newLine();
+            }
+        } catch (IOException e) {
+            System.out.println("Error saving room: " + e.getMessage());
+        }
+    }
+    
     private boolean isAdjacent(Hero h, Monster m) {
         int dx = Math.abs(h.getX() - m.getX());
         int dy = Math.abs(h.getY() - m.getY());
