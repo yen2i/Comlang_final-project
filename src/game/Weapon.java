@@ -12,7 +12,7 @@ public class Weapon implements Item {
     }
 
     public void use(Hero hero) {
-        System.out.println("Picked up: " + name);
+        System.out.println("You picked up a " + name + ".");
         hero.setWeapon(this);
     }
 

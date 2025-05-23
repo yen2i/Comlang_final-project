@@ -22,7 +22,7 @@ public class Hero extends Entity {
             System.out.println("You can't move there.");
         }
     }
-    
+
     public void setPosition(int x, int y) {
         this.x = x;
         this.y = y;
@@ -57,7 +57,7 @@ public class Hero extends Entity {
     }
 
     public String getWeaponName() {
-        return (weapon == null) ? "None" : weapon.getName();
+        return (weapon == null) ? "None" : weapon.getName() + "(" + weapon.getDamage() + ")";
     }
 
     public int getDamage() {

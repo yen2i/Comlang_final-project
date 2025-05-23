@@ -114,7 +114,7 @@ public class Room {
         while (ii.hasNext()) {
             Item item = ii.next();
             if (item instanceof Weapon && grid[hero.getX()][hero.getY()] == ((Weapon) item).getSymbol()) {
-                System.out.print("Switch to " + ((Weapon) item).getName() + "? (y/n): ");
+                System.out.print("Switch to " + ((Weapon) item).getName() + "(" + ((Weapon) item).getDamage() + ")" + "? (y/n): ");
                 if (s.nextLine().equalsIgnoreCase("y")) {
                     hero.pickUp(item);
                     ii.remove();

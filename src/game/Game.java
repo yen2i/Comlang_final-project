@@ -39,7 +39,7 @@ public class Game {
     private void gameLoop() {
         while (true) {
             room.display(hero);
-            System.out.println("HP: " + hero.getHp() + " | Weapon: " + hero.getWeaponName() + " | Key: " + (hero.hasKey() ? "YES" : "NO"));
+            System.out.println("HP: " + hero.getHp() + "/25" + " | Weapon: " + hero.getWeaponName() + " | Key: " + (hero.hasKey() ? "YES" : "NO"));
             System.out.print("Enter command (u/d/r/l to move, a to attack, q to quit): ");
             String cmd = scanner.nextLine().toLowerCase();
 
@@ -59,7 +59,7 @@ public class Game {
             if (movedToNextRoom) {
                 currentRoomNum++;
                 if (currentRoomNum > 4) {
-                    System.out.println("🎉 You escaped the maze! Game complete!");
+                    System.out.println("You escaped the maze! Game complete!");
                     break;
                 }
                 room = new Room(saveDir + "room" + currentRoomNum + ".csv");
