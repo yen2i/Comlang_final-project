@@ -60,8 +60,20 @@ public class Room {
                             items.add(new Potion(12, 'B'));
                             break;
                         case 'D':
-                            doors.add(new Door(i, j, "../rooms/room2.csv"));
+                            // 현재 파일 이름으로부터 다음 방 번호 계산
+                            String currentRoomPath = filename;
+                            String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");
+                            int nextRoomNum = Integer.parseInt(roomNumStr) + 1;
+                        
+                            String nextRoomPath = "saves/run1/room" + nextRoomNum + ".csv";
+                        
+                            if (nextRoomNum <= 4) {
+                                doors.add(new Door(i, j, nextRoomPath));
+                            } else {
+                                doors.add(new Door(i, j, "END")); // 마지막 방이면 종료 메시지
+                            }
                             break;
+                        
                     }
                 }
             }
@@ -90,8 +102,8 @@ public class Room {
         if (x < 0 || x >= rows || y < 0 || y >= cols) return false;
         return grid[x][y] != '#' && grid[x][y] != '|';
     }
-
-    public void checkInteractions(Hero hero) {
+    
+    public boolean checkInteractions(Hero hero, String savePath) {
         Iterator<Monster> mi = monsters.iterator();
         while (mi.hasNext()) {
             Monster m = mi.next();
@@ -132,15 +144,15 @@ public class Room {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
                 if (hero.hasKey()) {
                     System.out.println("You used the key to open the door.");
-                    saveToCSV("saves/run1/room1.csv"); // save the state
-
+                    saveToCSV("savePath"); // save the state
                     System.out.println("Loading next room...");
-                    loadFromCSV(d.getDestinationPath());
+                    return true; 
                 } else {
                     System.out.println("The door is locked. You need a key.");
                 }
             }
         }
+        return false;
     }
 
     public void saveToCSV(String path) {
