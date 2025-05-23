@@ -83,7 +83,7 @@ public class Room {
     }
 
     public void display(Hero hero) {
-        System.out.println("+-----------------------------+");
+        System.out.println("+-----------+");
         for (int i = 0; i < rows; i++) {
             System.out.print("| ");
             for (int j = 0; j < cols; j++) {
@@ -95,41 +95,26 @@ public class Room {
             }
             System.out.println("|");
         }
-        System.out.println("+-----------------------------+");
+        System.out.println("+-----------+");
     }
 
     public boolean isWalkable(int x, int y) {
         if (x < 0 || x >= rows || y < 0 || y >= cols) return false;
-        return grid[x][y] != '#' && grid[x][y] != '|';
-    }
+        char cell = grid[x][y];
     
+        // 이동 가능 대상은 벽/경계/장애물이 아닌 모든 칸
+        return !(cell == '#' || cell == '|');  // 나머지는 다 이동 허용
+    }
+
     public boolean checkInteractions(Hero hero, String savePath) {
+        Scanner s = new Scanner(System.in);
         Iterator<Monster> mi = monsters.iterator();
-        while (mi.hasNext()) {
-            Monster m = mi.next();
-            if (isAdjacent(hero, m)) {
-                System.out.println("You are next to a " + m.getName() + " (HP: " + m.getHp() + ")");
-                System.out.print("Attack? (y/n): ");
-                Scanner s = new Scanner(System.in);
-                if (s.nextLine().equalsIgnoreCase("y")) {
-                    hero.attack(m);
-                    if (m.getHp() <= 0) {
-                        if (m.dropsKey()) {
-                            System.out.println("The Troll dropped a key!");
-                            hero.obtainKey();
-                        }
-                        mi.remove();
-                    }
-                }
-            }
-        }
 
         Iterator<Item> ii = items.iterator();
         while (ii.hasNext()) {
             Item item = ii.next();
             if (item instanceof Weapon && grid[hero.getX()][hero.getY()] == ((Weapon) item).getSymbol()) {
                 System.out.print("Switch to " + ((Weapon) item).getName() + "? (y/n): ");
-                Scanner s = new Scanner(System.in);
                 if (s.nextLine().equalsIgnoreCase("y")) {
                     hero.pickUp(item);
                     ii.remove();
@@ -142,11 +127,15 @@ public class Room {
 
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
-                if (hero.hasKey()) {
-                    System.out.println("You used the key to open the door.");
-                    saveToCSV("savePath"); // save the state
+                String[] parts = savePath.split("room");
+                int currentRoomNum = Integer.parseInt(parts[1].replaceAll("[^0-9]", ""));
+        
+                // room1, room2 문은 key 없이도 열리게!
+                if (currentRoomNum <= 2 || hero.hasKey()) {
+                    System.out.println(hero.hasKey() ? "You used the key to open the door." : "The door opens freely.");
+                    saveToCSV(savePath);
                     System.out.println("Loading next room...");
-                    return true; 
+                    return true;
                 } else {
                     System.out.println("The door is locked. You need a key.");
                 }
@@ -155,6 +144,26 @@ public class Room {
         return false;
     }
 
+    public void attackAdjacentMonster(Hero hero) {
+        Iterator<Monster> mi = monsters.iterator();
+        while (mi.hasNext()) {
+            Monster m = mi.next();
+            if (isAdjacent(hero, m)) {
+                System.out.println("You attack the " + m.getName() + " (HP: " + m.getHp() + ")");
+                hero.attack(m);
+                if (m.getHp() <= 0) {
+                    if (m.dropsKey()) {
+                        System.out.println("The Troll dropped a key!");
+                        hero.obtainKey();
+                    }
+                    mi.remove();
+                }
+                return;  // 한 번만 공격
+            }
+        }
+        System.out.println("No monster nearby to attack.");
+    }
+    
     public void saveToCSV(String path) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
             bw.write(rows + "," + cols + "\n");

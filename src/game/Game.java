@@ -40,7 +40,7 @@ public class Game {
         while (true) {
             room.display(hero);
             System.out.println("HP: " + hero.getHp() + " | Weapon: " + hero.getWeaponName() + " | Key: " + (hero.hasKey() ? "YES" : "NO"));
-            System.out.print("Enter command (u/d/l/r/q): ");
+            System.out.print("Enter command (u/d/r/l to move, a to attack, q to quit): ");
             String cmd = scanner.nextLine().toLowerCase();
 
             if (cmd.equals("q")) break;
@@ -50,6 +50,7 @@ public class Game {
                 case "d": hero.move(1, 0, room); break;
                 case "l": hero.move(0, -1, room); break;
                 case "r": hero.move(0, 1, room); break;
+                case "a": room.attackAdjacentMonster(hero); break; 
                 default: System.out.println("Invalid input.");
             }
 
