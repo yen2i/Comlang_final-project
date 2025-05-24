@@ -74,6 +74,7 @@ public class Game {
                 }
                 room = new Room(saveDir + "room" + currentRoomNum + ".csv");
                 hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
+                hero.setRoom(room);
             }
         }
 
