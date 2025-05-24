@@ -23,6 +23,7 @@ public class Game {
 
         room = new Room(saveDir + "room1.csv");  // Copy initial room files into save directory
         hero = new Hero(room.getHeroStartX(), room.getHeroStartY());  // Place hero
+        hero.setRoom(room); //connect 
 
         gameLoop();  // Start main game loop
     }

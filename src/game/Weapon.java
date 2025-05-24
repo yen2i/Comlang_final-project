@@ -17,8 +17,23 @@ public class Weapon implements Item {
 
     // Equips this weapon to the hero
     public void use(Hero hero) {
-        System.out.println("You picked up a " + name + ".");
+        Weapon old = hero.getWeapon();
+        int x = hero.getX();
+        int y = hero.getY();
+        Room room = hero.getRoom();
+
+        if (old != null) {
+            // If already armed, drop old weapon on current tile
+            room.removeItemAt(x, y);
+            room.setCell(x, y, old.getSymbol());
+            room.addItem(old);  //put at list again
+        } else {
+            // If no previous weapon, clear the symbol
+            room.setCell(x, y, ' ');
+        }
+
         hero.setWeapon(this);
+        System.out.println("You picked up the " + name + ".");
     }
 
     // Returns the weapon's damage value

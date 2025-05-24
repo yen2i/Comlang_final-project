@@ -20,6 +20,38 @@ public class Room {
         loadFromCSV(filename);
     }
 
+    // Sets the character at the specified position (x, y) in the room grid.
+    public void setCell(int x, int y, char value) {
+        grid[x][y] = value;
+    }
+
+    //Adds the weapons at the list
+    public void addItem(Item item) {
+        items.add(item);
+    }    
+
+    //Returns the item (weapon or potion) located at the specified position.
+    public Item getItemAt(int x, int y) {
+        for (Item i : items) {
+            if (i instanceof Weapon || i instanceof Potion) {
+                if (((Entity)i).getX() == x && ((Entity)i).getY() == y) {
+                    return i;
+                }
+            }
+        }
+        return null;
+    }    
+
+    public void removeItemAt(int x, int y) {
+        items.removeIf(item -> {
+            if (item instanceof Entity) {
+                Entity e = (Entity) item;
+                return e.getX() == x && e.getY() == y;
+            }
+            return false;
+        });
+    }    
+
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String[] size = br.readLine().split(",");
@@ -93,7 +125,7 @@ public class Room {
             System.out.print("| ");
             for (int j = 0; j < cols; j++) {
                 if (i == hero.getX() && j == hero.getY()) {
-                    System.out.print("🧙");
+                    System.out.print("@ ");
                 } else {
                     System.out.print(grid[i][j] + " ");
                 }
@@ -101,7 +133,7 @@ public class Room {
             System.out.println("|");
         }
         System.out.println("+-----------+");
-    }
+    }    
 
     // Checks whether a cell at (x, y) is walkable
     public boolean isWalkable(int x, int y) {
@@ -128,8 +160,14 @@ public class Room {
                     ii.remove();
                 }
             } else if (item instanceof Potion && grid[hero.getX()][hero.getY()] == item.getSymbol()) {
-                hero.pickUp(item);
-                ii.remove();
+                if (hero.getHp() < 25) {
+                    hero.pickUp(item);
+                    setCell(hero.getX(), hero.getY(), ' ');  //remove potion from room
+                    ii.remove();  // remove from list
+                } else {
+                    System.out.println("You're already at full health.");
+                    // left potion
+                }
             }
         }
 
@@ -166,14 +204,16 @@ public class Room {
                 String input = scanner.nextLine();
 
                 if (input.equalsIgnoreCase("y")) {
-                    System.out.println("You attack the " + m.getName() + "!");
                     hero.attack(m);
+
+                    // If monster is defeated, remove from map and grid
                     if (m.getHp() <= 0) {
                         if (m.dropsKey()) {
                             System.out.println("The Troll dropped a key!");
                             hero.obtainKey();
                         }
                         mi.remove();
+                        setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                     }
                 } else {
                     System.out.println("You chose not to attack.");
