@@ -2,6 +2,9 @@ package game;
 
 import java.io.*;
 
+/*
+ * Utility class for reading and writing room data in CSV format.
+ */
 public class CSVUtil {
     public static char[][] readRoomGrid(String path) throws IOException {
         BufferedReader br = new BufferedReader(new FileReader(path));
@@ -23,8 +26,10 @@ public class CSVUtil {
 
     public static void writeRoomGrid(char[][] grid, String path) throws IOException {
         BufferedWriter bw = new BufferedWriter(new FileWriter(path));
+        // Write grid size to the first line
         bw.write(grid.length + "," + grid[0].length + "\n");
 
+        // Write each row of the grid
         for (char[] row : grid) {
             for (int j = 0; j < row.length; j++) {
                 bw.write(row[j]);
