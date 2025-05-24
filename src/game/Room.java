@@ -1,17 +1,21 @@
 package game;
 
-import java.util.*;
 import java.io.*;
+import java.util.*;
 
+/*
+ * Represents a single room in the game, including its grid, monsters, items, and doors.
+ */
 public class Room {
-    private char[][] grid;
-    private int rows, cols;
+    private char[][] grid;  // 2D map layout
+    private int rows, cols;  // Room dimensions
     private List<Monster> monsters = new ArrayList<>();
     private List<Item> items = new ArrayList<>();
-    private List<Door> doors = new ArrayList<>();
+    private List<Door> doors = new ArrayList<>();  
 
-    private int startX = 1, startY = 1;
+    private int startX = 1, startY = 1;  // Hero spawn position
 
+    // Constructor: loads room data from CSV file
     public Room(String filename) {
         loadFromCSV(filename);
     }
@@ -60,7 +64,7 @@ public class Room {
                             items.add(new Potion(12, 'B'));
                             break;
                         case 'D':
-                            // 현재 파일 이름으로부터 다음 방 번호 계산
+                            // Determine next room based on current room filename
                             String currentRoomPath = filename;
                             String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");
                             int nextRoomNum = Integer.parseInt(roomNumStr) + 1;
@@ -70,7 +74,7 @@ public class Room {
                             if (nextRoomNum <= 4) {
                                 doors.add(new Door(i, j, nextRoomPath));
                             } else {
-                                doors.add(new Door(i, j, "END")); // 마지막 방이면 종료 메시지
+                                doors.add(new Door(i, j, "END")); // End game if last room
                             }
                             break;
                         
@@ -82,13 +86,14 @@ public class Room {
         }
     }
 
+    // Displays the room grid with hero and symbols
     public void display(Hero hero) {
         System.out.println("+-----------+");
         for (int i = 0; i < rows; i++) {
             System.out.print("| ");
             for (int j = 0; j < cols; j++) {
                 if (i == hero.getX() && j == hero.getY()) {
-                    System.out.print("@ ");
+                    System.out.print("🧙");
                 } else {
                     System.out.print(grid[i][j] + " ");
                 }
@@ -98,18 +103,21 @@ public class Room {
         System.out.println("+-----------+");
     }
 
+    // Checks whether a cell at (x, y) is walkable
     public boolean isWalkable(int x, int y) {
         if (x < 0 || x >= rows || y < 0 || y >= cols) return false;
         char cell = grid[x][y];
     
-        // 이동 가능 대상은 벽/경계/장애물이 아닌 모든 칸
-        return !(cell == '#' || cell == '|');  // 나머지는 다 이동 허용
+        // Returns true if the cell is not a wall or obstacle (i.e., walkable)
+        return !(cell == '#' || cell == '|');  // Non-walkable: walls
     }
 
+    // Handles item pickups and door interactions
     public boolean checkInteractions(Hero hero, String savePath) {
         Scanner s = new Scanner(System.in);
         Iterator<Monster> mi = monsters.iterator();
 
+        // Handle item pickup
         Iterator<Item> ii = items.iterator();
         while (ii.hasNext()) {
             Item item = ii.next();
@@ -125,12 +133,13 @@ public class Room {
             }
         }
 
+        // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
                 String[] parts = savePath.split("room");
                 int currentRoomNum = Integer.parseInt(parts[1].replaceAll("[^0-9]", ""));
         
-                // room1, room2 문은 key 없이도 열리게!
+                // Allow doors in room1 and room2 to open without a key
                 if (currentRoomNum <= 2 || hero.hasKey()) {
                     System.out.println(hero.hasKey() ? "You used the key to open the door." : "The door opens freely.");
                     saveToCSV(savePath);
@@ -144,26 +153,38 @@ public class Room {
         return false;
     }
 
+    // Handles attack logic when hero is adjacent to a monster
     public void attackAdjacentMonster(Hero hero) {
         Iterator<Monster> mi = monsters.iterator();
+        Scanner scanner = new Scanner(System.in);  
+
         while (mi.hasNext()) {
             Monster m = mi.next();
             if (isAdjacent(hero, m)) {
-                System.out.println("You attack the " + m.getName() + " (HP: " + m.getHp() + ")");
-                hero.attack(m);
-                if (m.getHp() <= 0) {
-                    if (m.dropsKey()) {
-                        System.out.println("The Troll dropped a key!");
-                        hero.obtainKey();
+                System.out.println("You are next to a " + m.getName() + " (HP: " + m.getHp() + ")");
+                System.out.print("Attack? (y/n): ");
+                String input = scanner.nextLine();
+
+                if (input.equalsIgnoreCase("y")) {
+                    System.out.println("You attack the " + m.getName() + "!");
+                    hero.attack(m);
+                    if (m.getHp() <= 0) {
+                        if (m.dropsKey()) {
+                            System.out.println("The Troll dropped a key!");
+                            hero.obtainKey();
+                        }
+                        mi.remove();
                     }
-                    mi.remove();
+                } else {
+                    System.out.println("You chose not to attack.");
                 }
-                return;  // 한 번만 공격
+                return;  // Attack only one monster per turn
             }
         }
         System.out.println("No monster nearby to attack.");
     }
     
+    // Saves current room grid state to CSV file
     public void saveToCSV(String path) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
             bw.write(rows + "," + cols + "\n");
@@ -181,16 +202,19 @@ public class Room {
         }
     }
     
+    // Checks if the hero is next to a monster (Manhattan distance = 1)
     private boolean isAdjacent(Hero h, Monster m) {
         int dx = Math.abs(h.getX() - m.getX());
         int dy = Math.abs(h.getY() - m.getY());
         return (dx + dy == 1);
     }
 
+    // Getter for hero spawn X position
     public int getHeroStartX() {
         return startX;
     }
 
+    // Getter for hero spawn Y position
     public int getHeroStartY() {
         return startY;
     }

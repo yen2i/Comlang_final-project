@@ -4,25 +4,30 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
+/*
+ * Main game logic controller.
+ */
 public class Game {
-    private Room room;
-    private Hero hero;
-    private Scanner scanner = new Scanner(System.in);
-    private final String runId = "run1";
-    private final String saveDir = "saves/" + runId + "/";
-    private int currentRoomNum = 1;
+    private Room room;  // Current room instance
+    private Hero hero;  // Current room instance
+    private Scanner scanner = new Scanner(System.in);  // For user input
+    private final String runId = "run1";  // Unique run session name
+    private final String saveDir = "saves/" + runId + "/";  // Save file directory
+    private int currentRoomNum = 1;  // Current room number
 
+    // Current room number
     public void start() {
         System.out.println("=== Welcome to Solo Adventure Maze ===");
 
-        prepareSaveFolder();
+        prepareSaveFolder();  // Copy initial room files into save directory
 
-        room = new Room(saveDir + "room1.csv");
-        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());
+        room = new Room(saveDir + "room1.csv");  // Copy initial room files into save directory
+        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());  // Place hero
 
-        gameLoop();
+        gameLoop();  // Start main game loop
     }
 
+    // Start main game loop
     private void prepareSaveFolder() {
         try {
             Files.createDirectories(Paths.get(saveDir));
@@ -36,15 +41,17 @@ public class Game {
         }
     }
 
+    // Main game loop: displays map, handles input, interactions, and room transitions
     private void gameLoop() {
         while (true) {
-            room.display(hero);
+            room.display(hero);  // Show current room and hero
             System.out.println("HP: " + hero.getHp() + "/25" + " | Weapon: " + hero.getWeaponName() + " | Key: " + (hero.hasKey() ? "YES" : "NO"));
             System.out.print("Enter command (u/d/r/l to move, a to attack, q to quit): ");
             String cmd = scanner.nextLine().toLowerCase();
 
             if (cmd.equals("q")) break;
 
+            // Show current room and hero
             switch (cmd) {
                 case "u": hero.move(-1, 0, room); break;
                 case "d": hero.move(1, 0, room); break;
@@ -54,8 +61,10 @@ public class Game {
                 default: System.out.println("Invalid input.");
             }
 
+            // Show current room and hero
             boolean movedToNextRoom = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
+            // If moved to next room, load the new room
             if (movedToNextRoom) {
                 currentRoomNum++;
                 if (currentRoomNum > 4) {
