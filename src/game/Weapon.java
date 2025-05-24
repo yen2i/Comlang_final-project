@@ -24,16 +24,14 @@ public class Weapon implements Item {
 
         if (old != null) {
             // If already armed, drop old weapon on current tile
-            room.removeItemAt(x, y);
             room.setCell(x, y, old.getSymbol());
-            room.addItem(old);  //put at list again
         } else {
             // If no previous weapon, clear the symbol
             room.setCell(x, y, ' ');
         }
 
-        hero.setWeapon(this);
         System.out.println("You picked up the " + name + ".");
+        hero.setWeapon(this);
     }
 
     // Returns the weapon's damage value

@@ -22,13 +22,6 @@ public class Hero extends Entity {
         int newX = x + dx;
         int newY = y + dy;
         if (room.isWalkable(newX, newY)) {
-            //If there's an item on the current tile, restore its symbol
-            Item item = room.getItemAt(x, y);
-            if (item != null) {
-                room.setCell(x, y, item.getSymbol());
-            } else {
-                room.setCell(x, y, ' ');
-            }
             x = newX;
             y = newY;
         } else {

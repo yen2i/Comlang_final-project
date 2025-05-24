@@ -25,33 +25,6 @@ public class Room {
         grid[x][y] = value;
     }
 
-    //Adds the weapons at the list
-    public void addItem(Item item) {
-        items.add(item);
-    }    
-
-    //Returns the item (weapon or potion) located at the specified position.
-    public Item getItemAt(int x, int y) {
-        for (Item i : items) {
-            if (i instanceof Weapon || i instanceof Potion) {
-                if (((Entity)i).getX() == x && ((Entity)i).getY() == y) {
-                    return i;
-                }
-            }
-        }
-        return null;
-    }    
-
-    public void removeItemAt(int x, int y) {
-        items.removeIf(item -> {
-            if (item instanceof Entity) {
-                Entity e = (Entity) item;
-                return e.getX() == x && e.getY() == y;
-            }
-            return false;
-        });
-    }    
-
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String[] size = br.readLine().split(",");
@@ -133,7 +106,7 @@ public class Room {
             System.out.println("|");
         }
         System.out.println("+-----------+");
-    }    
+    }
 
     // Checks whether a cell at (x, y) is walkable
     public boolean isWalkable(int x, int y) {
