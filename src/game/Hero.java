@@ -6,6 +6,7 @@ package game;
 public class Hero extends Entity {
     private boolean hasKey;  // Whether the hero has the key
     private Weapon weapon;  // Equipped weapon
+    private Room currentRoom;  // Reference to the room the hero is currently in
 
     // Constructor: initializes hero's position, HP, and inventory
     public Hero(int x, int y) {
@@ -67,9 +68,24 @@ public class Hero extends Entity {
         this.weapon = w;
     }
 
+    //Returns picked weapons
+    public Weapon getWeapon() {
+        return this.weapon;
+    }
+
     // Returns the name and damage of the current weapon (or None)
     public String getWeaponName() {
         return (weapon == null) ? "None" : weapon.getName() + "(" + weapon.getDamage() + ")";
+    }
+    
+    // Sets the current room the hero is in
+    public void setRoom(Room room) {
+        this.currentRoom = room;
+    }
+    
+    // Returns the current room the hero is in
+    public Room getRoom() {
+        return this.currentRoom;
     }
 
     // Returns the hero's damage value

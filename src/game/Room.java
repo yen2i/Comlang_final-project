@@ -20,6 +20,11 @@ public class Room {
         loadFromCSV(filename);
     }
 
+    // Sets the character at the specified position (x, y) in the room grid.
+    public void setCell(int x, int y, char value) {
+        grid[x][y] = value;
+    }
+
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String[] size = br.readLine().split(",");
@@ -93,7 +98,7 @@ public class Room {
             System.out.print("| ");
             for (int j = 0; j < cols; j++) {
                 if (i == hero.getX() && j == hero.getY()) {
-                    System.out.print("🧙");
+                    System.out.print("@ ");
                 } else {
                     System.out.print(grid[i][j] + " ");
                 }
@@ -115,21 +120,30 @@ public class Room {
     // Handles item pickups and door interactions
     public boolean checkInteractions(Hero hero, String savePath) {
         Scanner s = new Scanner(System.in);
-        Iterator<Monster> mi = monsters.iterator();
 
-        // Handle item pickup
-        Iterator<Item> ii = items.iterator();
-        while (ii.hasNext()) {
-            Item item = ii.next();
-            if (item instanceof Weapon && grid[hero.getX()][hero.getY()] == ((Weapon) item).getSymbol()) {
+        // === Handle item pickup ===
+        for (Item item : new ArrayList<>(items)) {
+            int x = hero.getX();
+            int y = hero.getY();
+
+            // Weapon pickup and swap
+            if (item instanceof Weapon && grid[x][y] == ((Weapon) item).getSymbol()) {
                 System.out.print("Switch to " + ((Weapon) item).getName() + "(" + ((Weapon) item).getDamage() + ")" + "? (y/n): ");
                 if (s.nextLine().equalsIgnoreCase("y")) {
-                    hero.pickUp(item);
-                    ii.remove();
+                    hero.pickUp(item);      // This will handle dropping old weapon into grid + items
+                    items.remove(item);     // Remove the newly picked-up weapon from the list
                 }
-            } else if (item instanceof Potion && grid[hero.getX()][hero.getY()] == item.getSymbol()) {
-                hero.pickUp(item);
-                ii.remove();
+            }
+
+            // Potion pickup (only if hero is not full health)
+            else if (item instanceof Potion && grid[x][y] == item.getSymbol()) {
+                if (hero.getHp() < 25) {
+                    hero.pickUp(item);
+                    setCell(x, y, ' ');     // Clear potion symbol from grid
+                    items.remove(item);     // Remove potion from item list
+                } else {
+                    System.out.println("You're already at full health.");
+                }
             }
         }
 
@@ -166,14 +180,16 @@ public class Room {
                 String input = scanner.nextLine();
 
                 if (input.equalsIgnoreCase("y")) {
-                    System.out.println("You attack the " + m.getName() + "!");
                     hero.attack(m);
+
+                    // If monster is defeated, remove from map and grid
                     if (m.getHp() <= 0) {
                         if (m.dropsKey()) {
                             System.out.println("The Troll dropped a key!");
                             hero.obtainKey();
                         }
                         mi.remove();
+                        setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                     }
                 } else {
                     System.out.println("You chose not to attack.");
@@ -217,5 +233,9 @@ public class Room {
     // Getter for hero spawn Y position
     public int getHeroStartY() {
         return startY;
+    }
+
+    public List<Item> getItems() {
+    return items;
     }
 }
