@@ -25,6 +25,7 @@ public class Weapon implements Item {
         if (old != null) {
             // If already armed, drop old weapon on current tile
             room.setCell(x, y, old.getSymbol());
+            room.getItems().add(old);  // Add back to item list!
         } else {
             // If no previous weapon, clear the symbol
             room.setCell(x, y, ' ');

@@ -120,26 +120,29 @@ public class Room {
     // Handles item pickups and door interactions
     public boolean checkInteractions(Hero hero, String savePath) {
         Scanner s = new Scanner(System.in);
-        Iterator<Monster> mi = monsters.iterator();
 
-        // Handle item pickup
-        Iterator<Item> ii = items.iterator();
-        while (ii.hasNext()) {
-            Item item = ii.next();
-            if (item instanceof Weapon && grid[hero.getX()][hero.getY()] == ((Weapon) item).getSymbol()) {
+        // === Handle item pickup ===
+        for (Item item : new ArrayList<>(items)) {
+            int x = hero.getX();
+            int y = hero.getY();
+
+            // Weapon pickup and swap
+            if (item instanceof Weapon && grid[x][y] == ((Weapon) item).getSymbol()) {
                 System.out.print("Switch to " + ((Weapon) item).getName() + "(" + ((Weapon) item).getDamage() + ")" + "? (y/n): ");
                 if (s.nextLine().equalsIgnoreCase("y")) {
-                    hero.pickUp(item);
-                    ii.remove();
+                    hero.pickUp(item);      // This will handle dropping old weapon into grid + items
+                    items.remove(item);     // Remove the newly picked-up weapon from the list
                 }
-            } else if (item instanceof Potion && grid[hero.getX()][hero.getY()] == item.getSymbol()) {
+            }
+
+            // Potion pickup (only if hero is not full health)
+            else if (item instanceof Potion && grid[x][y] == item.getSymbol()) {
                 if (hero.getHp() < 25) {
                     hero.pickUp(item);
-                    setCell(hero.getX(), hero.getY(), ' ');  //remove potion from room
-                    ii.remove();  // remove from list
+                    setCell(x, y, ' ');     // Clear potion symbol from grid
+                    items.remove(item);     // Remove potion from item list
                 } else {
                     System.out.println("You're already at full health.");
-                    // left potion
                 }
             }
         }
@@ -230,5 +233,9 @@ public class Room {
     // Getter for hero spawn Y position
     public int getHeroStartY() {
         return startY;
+    }
+
+    public List<Item> getItems() {
+    return items;
     }
 }
