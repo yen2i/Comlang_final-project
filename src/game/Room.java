@@ -160,8 +160,8 @@ public class Room {
         // If hero steps on a key (★), pick it up
         if (getCell(hero.getX(), hero.getY()) == '★') {
             System.out.println("You picked up a key!");
-            hero.obtainKey(); 
             setCell(hero.getX(), hero.getY(), ' '); 
+            hero.obtainKey();
         }
 
         // Handle door interaction
@@ -204,7 +204,6 @@ public class Room {
                         if (m.dropsKey()) {
                             System.out.println("The " + m.getName() + " dropped a key!");
                             setCell(m.getX(), m.getY(), '★');   // If the monster is a Troll, drop a key (★) at its position
-                            hero.obtainKey(); // optional: if you want immediate pickup
                         } else {
                             setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                         }
