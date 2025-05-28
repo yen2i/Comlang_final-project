@@ -68,7 +68,7 @@ public class Room {
                         case 'B':
                             items.add(new Potion(12, 'B'));
                             break;
-                        case 'D':
+                        case 'd':
                             // Determine next room based on current room filename
                             String currentRoomPath = filename;
                             String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");

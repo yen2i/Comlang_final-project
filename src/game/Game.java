@@ -62,6 +62,12 @@ public class Game {
                 default: System.out.println("Invalid input.");
             }
 
+            // // If hero is dead after action, end the game
+            if (hero.isDead()) {
+                System.out.println("Your HP dropped to 0. You have died.");
+                break;
+            }
+
             // Show current room and hero
             boolean movedToNextRoom = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
@@ -77,7 +83,6 @@ public class Game {
                 hero.setRoom(room);
             }
         }
-
         System.out.println("Game Over.");
     }
 }

@@ -63,6 +63,11 @@ public class Hero extends Entity {
         System.out.println("Healed to " + hp + " HP.");
     }
 
+    // Check if hero is dead
+    public boolean isDead() {
+        return hp <= 0;       // Returns true if the hero's HP is 0 or less
+    }
+
     // Equips a weapon
     public void setWeapon(Weapon w) {
         this.weapon = w;
