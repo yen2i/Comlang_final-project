@@ -25,6 +25,11 @@ public class Room {
         grid[x][y] = value;
     }
 
+    // Returns the character at a specific (x, y) location on the map grid
+    public char getCell(int x, int y) {
+        return grid[x][y];
+    }
+
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String[] size = br.readLine().split(",");
@@ -146,6 +151,13 @@ public class Room {
                 }
             }
         }
+        
+        // If hero steps on a key (★), pick it up
+        if (getCell(hero.getX(), hero.getY()) == '★') {
+            System.out.println("You picked up a key!");
+            hero.obtainKey(); 
+            setCell(hero.getX(), hero.getY(), ' '); 
+        }
 
         // Handle door interaction
         for (Door d : doors) {
@@ -185,11 +197,13 @@ public class Room {
                     // If monster is defeated, remove from map and grid
                     if (m.getHp() <= 0) {
                         if (m.dropsKey()) {
-                            System.out.println("The Troll dropped a key!");
-                            hero.obtainKey();
+                            System.out.println("The " + m.getName() + " dropped a key!");
+                            setCell(m.getX(), m.getY(), '★');   // If the monster is a Troll, drop a key (★) at its position
+                            hero.obtainKey(); // optional: if you want immediate pickup
+                        } else {
+                            setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                         }
                         mi.remove();
-                        setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                     }
                 } else {
                     System.out.println("You chose not to attack.");
@@ -199,7 +213,7 @@ public class Room {
         }
         System.out.println("No monster nearby to attack.");
     }
-    
+        
     // Saves current room grid state to CSV file
     public void saveToCSV(String path) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
