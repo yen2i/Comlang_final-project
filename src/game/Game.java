@@ -71,18 +71,24 @@ public class Game {
             // Show current room and hero
             boolean movedToNextRoom = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
-            // If moved to next room, load the new room
             if (movedToNextRoom) {
-                currentRoomNum++;
-                if (currentRoomNum > 4) {
-                    System.out.println("You escaped the maze! Game complete!");
-                    break;
+                // 현재 위치한 도어 중 어떤 도어인지 찾아서 이동할 경로 결정
+                for (Door d : room.getDoors()) {
+                    if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
+                        String destination = d.getDestinationPath();
+
+                        if (destination.equals("END")) {
+                            System.out.println("You escaped the maze! Game complete!");
+                            return;
+                        }
+
+                        room = new Room(destination);
+                        hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
+                        hero.setRoom(room);
+                        break;
+                    }
                 }
-                room = new Room(saveDir + "room" + currentRoomNum + ".csv");
-                hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
-                hero.setRoom(room);
             }
         }
-        System.out.println("Game Over.");
     }
 }

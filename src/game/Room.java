@@ -34,6 +34,11 @@ public class Room {
         return grid[x][y];
     }
 
+    public List<Door> getDoors() {
+        return doors;
+    }
+    
+
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
             String[] size = br.readLine().split(",");
@@ -46,18 +51,17 @@ public class Room {
                 for (int j = 0; j < cols; j++) {
                     String cellData = line[j].trim();
 
-                    // 1. 도어 직접 지정된 경우 처리: d:room4.csv
-                    if (cellData.startsWith("d:")) {
-                        grid[i][j] = 'd';  // 도어 표시
-                        String roomPath = cellData.substring(2);  // e.g., "room4.csv"
-                        if (roomPath.equalsIgnoreCase("END")) {
-                            doors.add(new Door(i, j, "END"));
-                        } else {
-                            doors.add(new Door(i, j, "saves/run1/" + roomPath));
-                        }
-                        continue; // 이 칸은 도어 처리 끝났으니 skip
+                    if (cellData.startsWith("d:") || cellData.startsWith("D:")) {
+                        char doorType = cellData.charAt(0); // 'd' or 'D'
+                        grid[i][j] = doorType;
+                    
+                        String path = cellData.substring(2); // room4.csv or END
+                        String fullPath = path.equalsIgnoreCase("END") ? "END" : "saves/run1/" + path;
+                    
+                        doors.add(new Door(i, j, fullPath, doorType));
+                        continue; // 이미 처리됨
                     }
-
+                    
                     // 2. 일반 문자로 처리
                     char c = cellData.isEmpty() ? ' ' : cellData.charAt(0);
                     grid[i][j] = c;
@@ -165,19 +169,27 @@ public class Room {
         }
 
         // Handle door interaction
+       // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
-                String[] parts = savePath.split("room");
-                int currentRoomNum = Integer.parseInt(parts[1].replaceAll("[^0-9]", ""));
-        
-                // Allow doors in room1 and room2 to open without a key
-                if (currentRoomNum <= 2 || hero.hasKey()) {
-                    System.out.println(hero.hasKey() ? "You used the key to open the door." : "The door opens freely.");
+
+                // D: Master Door - needs a key and ends game
+                if (grid[d.getX()][d.getY()] == 'D') {
+                    if (hero.hasKey()) {
+                        System.out.println("You used the key to open the Master Door.");
+                        System.out.println("You have escaped the dungeon. Congratulations!");
+                        return true;
+                    } else {
+                        System.out.println("The Master Door is locked. You need a key to escape.");
+                        return false;
+                    }
+                }
+
+                // d: Regular Door - always opens
+                else if (grid[d.getX()][d.getY()] == 'd') {
+                    System.out.println("The door opens freely.");
                     saveToCSV(savePath);
-                    System.out.println("Loading next room...");
                     return true;
-                } else {
-                    System.out.println("The door is locked. You need a key.");
                 }
             }
         }
