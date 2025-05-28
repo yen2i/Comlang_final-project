@@ -44,7 +44,22 @@ public class Room {
             for (int i = 0; i < rows; i++) {
                 String[] line = br.readLine().split(",");
                 for (int j = 0; j < cols; j++) {
-                    char c = line[j].charAt(0);
+                    String cellData = line[j].trim();
+
+                    // 1. 도어 직접 지정된 경우 처리: d:room4.csv
+                    if (cellData.startsWith("d:")) {
+                        grid[i][j] = 'd';  // 도어 표시
+                        String roomPath = cellData.substring(2);  // e.g., "room4.csv"
+                        if (roomPath.equalsIgnoreCase("END")) {
+                            doors.add(new Door(i, j, "END"));
+                        } else {
+                            doors.add(new Door(i, j, "saves/run1/" + roomPath));
+                        }
+                        continue; // 이 칸은 도어 처리 끝났으니 skip
+                    }
+
+                    // 2. 일반 문자로 처리
+                    char c = cellData.isEmpty() ? ' ' : cellData.charAt(0);
                     grid[i][j] = c;
 
                     switch (c) {
@@ -76,21 +91,6 @@ public class Room {
                             break;
                         case 'B':
                             items.add(new Potion(12, 'B'));
-                            break;
-                        case 'd':
-                            // Determine next room based on current room filename
-                            grid[i][j] = 'd'; 
-                            String currentRoomPath = filename;
-                            String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");
-                            int nextRoomNum = Integer.parseInt(roomNumStr) + 1;
-                        
-                            String nextRoomPath = "saves/run1/room" + nextRoomNum + ".csv";
-                        
-                            if (nextRoomNum <= 4) {
-                                doors.add(new Door(i, j, nextRoomPath));
-                            } else {
-                                doors.add(new Door(i, j, "END")); // End game if last room
-                            }
                             break;
                         
                     }
