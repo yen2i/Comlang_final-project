@@ -13,11 +13,15 @@ public class Room {
     private List<Item> items = new ArrayList<>();
     private List<Door> doors = new ArrayList<>();  
 
-    private int startX = 1, startY = 1;  // Hero spawn position
+     // Hero spawn position
+    private int heroStartX = -1;
+    private int heroStartY = -1;
+
 
     // Constructor: loads room data from CSV file
     public Room(String filename) {
         loadFromCSV(filename);
+        findHeroStartPosition();  
     }
 
     // Sets the character at the specified position (x, y) in the room grid.
@@ -45,8 +49,8 @@ public class Room {
 
                     switch (c) {
                         case '@':
-                            startX = i;
-                            startY = j;
+                            heroStartX = i;
+                            heroStartY = j;
                             grid[i][j] = ' ';
                             break;
                         case 'G':
@@ -75,6 +79,7 @@ public class Room {
                             break;
                         case 'd':
                             // Determine next room based on current room filename
+                            grid[i][j] = 'd'; 
                             String currentRoomPath = filename;
                             String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");
                             int nextRoomNum = Integer.parseInt(roomNumStr) + 1;
@@ -231,6 +236,49 @@ public class Room {
             System.out.println("Error saving room: " + e.getMessage());
         }
     }
+
+    // Sets the hero's starting position based on rules
+    private void findHeroStartPosition() {
+        // 1. Look for '@'
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == ' ') {
+                    heroStartX = i;
+                    heroStartY = j;
+                    grid[i][j] = ' '; // Clear the '@' from the map
+                    return;
+                }
+            }
+        }
+
+        // 2. If no '@', try (1,1)
+        if (grid[1][1] == ' ') {
+            heroStartX = 1;
+            heroStartY = 1;
+            return;
+        }
+
+        // 3. Else, pick random empty space
+        List<int[]> emptyCells = new ArrayList<>();
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == ' ') {
+                    emptyCells.add(new int[]{i, j});
+                }
+            }
+        }
+
+        if (!emptyCells.isEmpty()) {
+            Random rand = new Random(System.nanoTime()); // Stronger randomness
+            int[] pos = emptyCells.get(rand.nextInt(emptyCells.size()));
+            heroStartX = pos[0];
+            heroStartY = pos[1];
+        } else {
+            // Fallback: should never happen
+            heroStartX = 1;
+            heroStartY = 1;
+        }
+    }
     
     // Checks if the hero is next to a monster (Manhattan distance = 1)
     private boolean isAdjacent(Hero h, Monster m) {
@@ -241,12 +289,12 @@ public class Room {
 
     // Getter for hero spawn X position
     public int getHeroStartX() {
-        return startX;
+        return heroStartX;
     }
 
     // Getter for hero spawn Y position
     public int getHeroStartY() {
-        return startY;
+        return heroStartY;
     }
 
     public List<Item> getItems() {
