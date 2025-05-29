@@ -53,17 +53,26 @@ public class Room {
                 for (int j = 0; j < cols; j++) {
                     String cellData = line[j].trim();
 
-                    if (cellData.startsWith("d:") || cellData.startsWith("D:")) {
+                    if (cellData.startsWith("d:") || cellData.startsWith("D")) {
                         char doorType = cellData.charAt(0); // 'd' or 'D'
                         grid[i][j] = doorType;
                     
-                        String path = cellData.substring(2); // room4.csv or END
+                        String path = "";
+                        if (cellData.contains(":")) {
+                            path = cellData.substring(2);
+                        } else if (doorType == 'D') {
+                            path = "END";  // D만 있을 경우 자동으로 END 처리
+                        } else {
+                            System.out.println("Warning: door without destination at (" + i + "," + j + ")");
+                            continue;
+                        }
+
                         String fullPath = path.equalsIgnoreCase("END") ? "END" : "saves/run1/" + path;
                     
                         doors.add(new Door(i, j, fullPath, doorType));
                         continue; // 이미 처리됨
                     }
-                    
+
                     // 2. 일반 문자로 처리
                     char c = cellData.isEmpty() ? ' ' : cellData.charAt(0);
                     grid[i][j] = c;
@@ -173,7 +182,7 @@ public class Room {
        // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
-                
+
                 // ✅ Master Door (Final)
                 if (d.isMasterDoor()) {
                     if (hero.hasKey()) {
