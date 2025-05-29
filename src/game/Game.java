@@ -14,6 +14,14 @@ public class Game {
     private final String runId = "run1";  // Unique run session name
     private final String saveDir = "saves/" + runId + "/";  // Save file directory
     private int currentRoomNum = 1;  // Current room number
+    private Map<String, Room> roomCache = new HashMap<>();
+
+    private Room getOrCreateRoom(String path) {
+        if (!roomCache.containsKey(path)) {
+            roomCache.put(path, new Room(path));
+        }
+        return roomCache.get(path);
+    }
 
     // Current room number
     public void start() {
@@ -62,22 +70,47 @@ public class Game {
                 default: System.out.println("Invalid input.");
             }
 
-            // Show current room and hero
-            boolean movedToNextRoom = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
+            // // If hero is dead after action, end the game
+            if (hero.isDead()) {
+                System.out.println("Your HP dropped to 0. You have died.");
+                break;
+            }
 
-            // If moved to next room, load the new room
-            if (movedToNextRoom) {
-                currentRoomNum++;
-                if (currentRoomNum > 4) {
-                    System.out.println("You escaped the maze! Game complete!");
-                    break;
+            // Show current room and hero
+            String moveResult = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
+
+            if (moveResult.equals("NEXT")) {
+                // Save the current room
+                room.saveToCSV(saveDir + "room" + currentRoomNum + ".csv");
+
+                // Find which door is currently located and determine the path to move
+                for (Door d : room.getDoors()) {
+                    if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
+                        String destination = d.getDestinationPath();
+
+                        if (destination.equals("END")) {
+                            System.out.println("You escaped the maze! Game complete!");
+                            return;
+                        }
+
+                        // Update currentRoomNum 
+                        if (destination.contains("room1")) currentRoomNum = 1;
+                        else if (destination.contains("room2")) currentRoomNum = 2;
+                        else if (destination.contains("room3")) currentRoomNum = 3;
+                        else if (destination.contains("room4")) currentRoomNum = 4;
+
+                        // Reuse Room objects using cache
+                        room = getOrCreateRoom(destination);
+                        hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
+                        hero.setRoom(room);
+                        break;
+                                }
                 }
-                room = new Room(saveDir + "room" + currentRoomNum + ".csv");
-                hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
-                hero.setRoom(room);
+            }
+            else if (moveResult.equals("END")) {
+                System.out.println("You escaped the maze! Game complete!");
+                return;
             }
         }
-
-        System.out.println("Game Over.");
     }
 }

@@ -12,18 +12,34 @@ public class Room {
     private List<Monster> monsters = new ArrayList<>();
     private List<Item> items = new ArrayList<>();
     private List<Door> doors = new ArrayList<>();  
+    private String filename;  // Save path of the current room
 
-    private int startX = 1, startY = 1;  // Hero spawn position
+     // Hero spawn position
+    private int heroStartX = -1;
+    private int heroStartY = -1;
+
 
     // Constructor: loads room data from CSV file
     public Room(String filename) {
+        this.filename = filename;          
         loadFromCSV(filename);
+        findHeroStartPosition();  
     }
 
     // Sets the character at the specified position (x, y) in the room grid.
     public void setCell(int x, int y, char value) {
         grid[x][y] = value;
     }
+
+    // Returns the character at a specific (x, y) location on the map grid
+    public char getCell(int x, int y) {
+        return grid[x][y];
+    }
+
+    public List<Door> getDoors() {
+        return doors;
+    }
+    
 
     public void loadFromCSV(String filename) {
         try (BufferedReader br = new BufferedReader(new FileReader(filename))) {
@@ -35,13 +51,36 @@ public class Room {
             for (int i = 0; i < rows; i++) {
                 String[] line = br.readLine().split(",");
                 for (int j = 0; j < cols; j++) {
-                    char c = line[j].charAt(0);
+                    String cellData = line[j].trim();
+
+                    if (cellData.startsWith("d:") || cellData.startsWith("D")) {
+                        char doorType = cellData.charAt(0); // 'd' or 'D'
+                        grid[i][j] = doorType;
+                    
+                        String path = "";
+                        if (cellData.contains(":")) {
+                            path = cellData.substring(2);
+                        } else if (doorType == 'D') {
+                            path = "END";  // Automatic END processing if there is only D
+                        } else {
+                            System.out.println("Warning: door without destination at (" + i + "," + j + ")");
+                            continue;
+                        }
+
+                        String fullPath = path.equalsIgnoreCase("END") ? "END" : "saves/run1/" + path;
+                    
+                        doors.add(new Door(i, j, fullPath, doorType));
+                        continue; // Already processed
+                    }
+
+                    // 2. Process in plain characters
+                    char c = cellData.isEmpty() ? ' ' : cellData.charAt(0);
                     grid[i][j] = c;
 
                     switch (c) {
                         case '@':
-                            startX = i;
-                            startY = j;
+                            heroStartX = i;
+                            heroStartY = j;
                             grid[i][j] = ' ';
                             break;
                         case 'G':
@@ -67,20 +106,6 @@ public class Room {
                             break;
                         case 'B':
                             items.add(new Potion(12, 'B'));
-                            break;
-                        case 'D':
-                            // Determine next room based on current room filename
-                            String currentRoomPath = filename;
-                            String roomNumStr = currentRoomPath.replaceAll("[^0-9]", "");
-                            int nextRoomNum = Integer.parseInt(roomNumStr) + 1;
-                        
-                            String nextRoomPath = "saves/run1/room" + nextRoomNum + ".csv";
-                        
-                            if (nextRoomNum <= 4) {
-                                doors.add(new Door(i, j, nextRoomPath));
-                            } else {
-                                doors.add(new Door(i, j, "END")); // End game if last room
-                            }
                             break;
                         
                     }
@@ -118,7 +143,7 @@ public class Room {
     }
 
     // Handles item pickups and door interactions
-    public boolean checkInteractions(Hero hero, String savePath) {
+    public String checkInteractions(Hero hero, String savePath) {
         Scanner s = new Scanner(System.in);
 
         // === Handle item pickup ===
@@ -146,25 +171,39 @@ public class Room {
                 }
             }
         }
+        
+        // If hero steps on a key (★), pick it up
+        if (getCell(hero.getX(), hero.getY()) == '★') {
+            System.out.println("You picked up a key!");
+            setCell(hero.getX(), hero.getY(), ' '); 
+            hero.obtainKey();
+        }
 
-        // Handle door interaction
+       // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
-                String[] parts = savePath.split("room");
-                int currentRoomNum = Integer.parseInt(parts[1].replaceAll("[^0-9]", ""));
-        
-                // Allow doors in room1 and room2 to open without a key
-                if (currentRoomNum <= 2 || hero.hasKey()) {
-                    System.out.println(hero.hasKey() ? "You used the key to open the door." : "The door opens freely.");
+
+                // Master Door 
+                if (d.isMasterDoor()) {
+                    if (hero.hasKey()) {
+                        System.out.println("You used the key to open the Master Door.");
+                        System.out.println("You have escaped the dungeon. Congratulations!");
+                        return "END";
+                    } else {
+                        System.out.println("The Master Door is locked. You need a key to escape.");
+                        return "NONE";
+                    }
+                }
+
+                // Regular Door
+                else {
+                    System.out.println("The door opens freely.");
                     saveToCSV(savePath);
-                    System.out.println("Loading next room...");
-                    return true;
-                } else {
-                    System.out.println("The door is locked. You need a key.");
+                    return "NEXT";
                 }
             }
         }
-        return false;
+        return "NONE";
     }
 
     // Handles attack logic when hero is adjacent to a monster
@@ -185,11 +224,12 @@ public class Room {
                     // If monster is defeated, remove from map and grid
                     if (m.getHp() <= 0) {
                         if (m.dropsKey()) {
-                            System.out.println("The Troll dropped a key!");
-                            hero.obtainKey();
+                            System.out.println("The " + m.getName() + " dropped a key!");
+                            setCell(m.getX(), m.getY(), '★');   // If the monster is a Troll, drop a key (★) at its position
+                        } else {
+                            setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                         }
                         mi.remove();
-                        setCell(m.getX(), m.getY(), ' ');  // Remove monster symbol from grid
                     }
                 } else {
                     System.out.println("You chose not to attack.");
@@ -199,22 +239,78 @@ public class Room {
         }
         System.out.println("No monster nearby to attack.");
     }
-    
+        
     // Saves current room grid state to CSV file
     public void saveToCSV(String path) {
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(path))) {
             bw.write(rows + "," + cols + "\n");
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
-                    bw.write(grid[i][j]);
-                    if (j < cols - 1) {
-                        bw.write(",");
+                    boolean isDoorCell = false;
+                    for (Door door : doors) {
+                                if (door.getX() == i && door.getY() == j) {
+                                    String dest = door.getDestinationPath().replace("saves/run1/", "");
+                                    bw.write(door.getType() + ":" + dest);
+                                    isDoorCell = true;
+                                    break;
+                                }
+                            }
+
+                            if (!isDoorCell) {
+                                bw.write(grid[i][j]);
+                            }
+
+                            if (j < cols - 1) {
+                                bw.write(",");
+                            }
+                        }
+                        bw.newLine();
                     }
+                } catch (IOException e) {
+                    System.out.println("Error saving room: " + e.getMessage());
                 }
-                bw.newLine();
             }
-        } catch (IOException e) {
-            System.out.println("Error saving room: " + e.getMessage());
+
+    // Sets the hero's starting position based on rules
+    private void findHeroStartPosition() {
+        // 1. Look for '@'
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == ' ') {
+                    heroStartX = i;
+                    heroStartY = j;
+                    grid[i][j] = ' '; // Clear the '@' from the map
+                    return;
+                }
+            }
+        }
+
+        // 2. If no '@', try (1,1)
+        if (grid[1][1] == ' ') {
+            heroStartX = 1;
+            heroStartY = 1;
+            return;
+        }
+
+        // 3. Else, pick random empty space
+        List<int[]> emptyCells = new ArrayList<>();
+        for (int i = 0; i < grid.length; i++) {
+            for (int j = 0; j < grid[0].length; j++) {
+                if (grid[i][j] == ' ') {
+                    emptyCells.add(new int[]{i, j});
+                }
+            }
+        }
+
+        if (!emptyCells.isEmpty()) {
+            Random rand = new Random(System.nanoTime()); // Stronger randomness
+            int[] pos = emptyCells.get(rand.nextInt(emptyCells.size()));
+            heroStartX = pos[0];
+            heroStartY = pos[1];
+        } else {
+            // Fallback: should never happen
+            heroStartX = 1;
+            heroStartY = 1;
         }
     }
     
@@ -227,15 +323,19 @@ public class Room {
 
     // Getter for hero spawn X position
     public int getHeroStartX() {
-        return startX;
+        return heroStartX;
     }
 
     // Getter for hero spawn Y position
     public int getHeroStartY() {
-        return startY;
+        return heroStartY;
     }
 
     public List<Item> getItems() {
     return items;
+    }
+
+    public String getFilename() {
+    return filename;
     }
 }
