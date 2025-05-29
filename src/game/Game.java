@@ -14,6 +14,14 @@ public class Game {
     private final String runId = "run1";  // Unique run session name
     private final String saveDir = "saves/" + runId + "/";  // Save file directory
     private int currentRoomNum = 1;  // Current room number
+    private Map<String, Room> roomCache = new HashMap<>();
+
+    private Room getOrCreateRoom(String path) {
+        if (!roomCache.containsKey(path)) {
+            roomCache.put(path, new Room(path));
+        }
+        return roomCache.get(path);
+    }
 
     // Current room number
     public void start() {
@@ -69,9 +77,12 @@ public class Game {
             }
 
             // Show current room and hero
-            boolean movedToNextRoom = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
+            String moveResult = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
-            if (movedToNextRoom) {
+            if (moveResult.equals("NEXT")) {
+                // 현재 방 저장
+                room.saveToCSV(saveDir + "room" + currentRoomNum + ".csv");
+
                 // 현재 위치한 도어 중 어떤 도어인지 찾아서 이동할 경로 결정
                 for (Door d : room.getDoors()) {
                     if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
@@ -82,12 +93,17 @@ public class Game {
                             return;
                         }
 
-                        room = new Room(destination);
+                        // ✅ 캐시를 이용해 Room 객체를 재사용
+                        room = getOrCreateRoom(destination);
                         hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
                         hero.setRoom(room);
                         break;
-                    }
+                                }
                 }
+            }
+            else if (moveResult.equals("END")) {
+                System.out.println("You escaped the maze! Game complete!");
+                return;
             }
         }
     }

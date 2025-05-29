@@ -12,6 +12,7 @@ public class Room {
     private List<Monster> monsters = new ArrayList<>();
     private List<Item> items = new ArrayList<>();
     private List<Door> doors = new ArrayList<>();  
+    private String filename;  // 현재 방의 경로 저장
 
      // Hero spawn position
     private int heroStartX = -1;
@@ -20,6 +21,7 @@ public class Room {
 
     // Constructor: loads room data from CSV file
     public Room(String filename) {
+        this.filename = filename;          
         loadFromCSV(filename);
         findHeroStartPosition();  
     }
@@ -132,7 +134,7 @@ public class Room {
     }
 
     // Handles item pickups and door interactions
-    public boolean checkInteractions(Hero hero, String savePath) {
+    public String checkInteractions(Hero hero, String savePath) {
         Scanner s = new Scanner(System.in);
 
         // === Handle item pickup ===
@@ -168,32 +170,31 @@ public class Room {
             hero.obtainKey();
         }
 
-        // Handle door interaction
        // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
 
-                // D: Master Door - needs a key and ends game
+                // D: Master Door (Final)
                 if (grid[d.getX()][d.getY()] == 'D') {
                     if (hero.hasKey()) {
                         System.out.println("You used the key to open the Master Door.");
                         System.out.println("You have escaped the dungeon. Congratulations!");
-                        return true;
+                        return "END";
                     } else {
                         System.out.println("The Master Door is locked. You need a key to escape.");
-                        return false;
+                        return "NONE";
                     }
                 }
 
-                // d: Regular Door - always opens
+                // d: Regular Door
                 else if (grid[d.getX()][d.getY()] == 'd') {
                     System.out.println("The door opens freely.");
                     saveToCSV(savePath);
-                    return true;
+                    return "NEXT";
                 }
             }
         }
-        return false;
+        return "NONE";
     }
 
     // Handles attack logic when hero is adjacent to a monster
@@ -310,5 +311,9 @@ public class Room {
 
     public List<Item> getItems() {
     return items;
+    }
+
+    public String getFilename() {
+    return filename;
     }
 }
