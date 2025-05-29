@@ -237,17 +237,30 @@ public class Room {
             bw.write(rows + "," + cols + "\n");
             for (int i = 0; i < rows; i++) {
                 for (int j = 0; j < cols; j++) {
-                    bw.write(grid[i][j]);
-                    if (j < cols - 1) {
-                        bw.write(",");
+                    boolean isDoorCell = false;
+                    for (Door door : doors) {
+                                if (door.getX() == i && door.getY() == j) {
+                                    String dest = door.getDestinationPath().replace("saves/run1/", "");
+                                    bw.write(door.getType() + ":" + dest);
+                                    isDoorCell = true;
+                                    break;
+                                }
+                            }
+
+                            if (!isDoorCell) {
+                                bw.write(grid[i][j]);
+                            }
+
+                            if (j < cols - 1) {
+                                bw.write(",");
+                            }
+                        }
+                        bw.newLine();
                     }
+                } catch (IOException e) {
+                    System.out.println("Error saving room: " + e.getMessage());
                 }
-                bw.newLine();
             }
-        } catch (IOException e) {
-            System.out.println("Error saving room: " + e.getMessage());
-        }
-    }
 
     // Sets the hero's starting position based on rules
     private void findHeroStartPosition() {

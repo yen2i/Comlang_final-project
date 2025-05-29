@@ -93,6 +93,12 @@ public class Game {
                             return;
                         }
 
+                        // currentRoomNum 업데이트
+                        if (destination.contains("room1")) currentRoomNum = 1;
+                        else if (destination.contains("room2")) currentRoomNum = 2;
+                        else if (destination.contains("room3")) currentRoomNum = 3;
+                        else if (destination.contains("room4")) currentRoomNum = 4;
+
                         // ✅ 캐시를 이용해 Room 객체를 재사용
                         room = getOrCreateRoom(destination);
                         hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
