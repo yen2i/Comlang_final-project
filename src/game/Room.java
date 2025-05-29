@@ -173,9 +173,9 @@ public class Room {
        // Handle door interaction
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
-
-                // D: Master Door (Final)
-                if (grid[d.getX()][d.getY()] == 'D') {
+                
+                // ✅ Master Door (Final)
+                if (d.isMasterDoor()) {
                     if (hero.hasKey()) {
                         System.out.println("You used the key to open the Master Door.");
                         System.out.println("You have escaped the dungeon. Congratulations!");
@@ -186,8 +186,8 @@ public class Room {
                     }
                 }
 
-                // d: Regular Door
-                else if (grid[d.getX()][d.getY()] == 'd') {
+                // ✅ Regular Door
+                else {
                     System.out.println("The door opens freely.");
                     saveToCSV(savePath);
                     return "NEXT";
