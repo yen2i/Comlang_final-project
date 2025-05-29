@@ -12,7 +12,7 @@ public class Room {
     private List<Monster> monsters = new ArrayList<>();
     private List<Item> items = new ArrayList<>();
     private List<Door> doors = new ArrayList<>();  
-    private String filename;  // 현재 방의 경로 저장
+    private String filename;  // Save path of the current room
 
      // Hero spawn position
     private int heroStartX = -1;
@@ -61,7 +61,7 @@ public class Room {
                         if (cellData.contains(":")) {
                             path = cellData.substring(2);
                         } else if (doorType == 'D') {
-                            path = "END";  // D만 있을 경우 자동으로 END 처리
+                            path = "END";  // Automatic END processing if there is only D
                         } else {
                             System.out.println("Warning: door without destination at (" + i + "," + j + ")");
                             continue;
@@ -70,10 +70,10 @@ public class Room {
                         String fullPath = path.equalsIgnoreCase("END") ? "END" : "saves/run1/" + path;
                     
                         doors.add(new Door(i, j, fullPath, doorType));
-                        continue; // 이미 처리됨
+                        continue; // Already processed
                     }
 
-                    // 2. 일반 문자로 처리
+                    // 2. Process in plain characters
                     char c = cellData.isEmpty() ? ' ' : cellData.charAt(0);
                     grid[i][j] = c;
 
@@ -183,7 +183,7 @@ public class Room {
         for (Door d : doors) {
             if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
 
-                // ✅ Master Door (Final)
+                // Master Door 
                 if (d.isMasterDoor()) {
                     if (hero.hasKey()) {
                         System.out.println("You used the key to open the Master Door.");
@@ -195,7 +195,7 @@ public class Room {
                     }
                 }
 
-                // ✅ Regular Door
+                // Regular Door
                 else {
                     System.out.println("The door opens freely.");
                     saveToCSV(savePath);

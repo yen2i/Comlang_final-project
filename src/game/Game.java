@@ -80,10 +80,10 @@ public class Game {
             String moveResult = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
             if (moveResult.equals("NEXT")) {
-                // 현재 방 저장
+                // Save the current room
                 room.saveToCSV(saveDir + "room" + currentRoomNum + ".csv");
 
-                // 현재 위치한 도어 중 어떤 도어인지 찾아서 이동할 경로 결정
+                // Find which door is currently located and determine the path to move
                 for (Door d : room.getDoors()) {
                     if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
                         String destination = d.getDestinationPath();
@@ -93,13 +93,13 @@ public class Game {
                             return;
                         }
 
-                        // currentRoomNum 업데이트
+                        // Update currentRoomNum 
                         if (destination.contains("room1")) currentRoomNum = 1;
                         else if (destination.contains("room2")) currentRoomNum = 2;
                         else if (destination.contains("room3")) currentRoomNum = 3;
                         else if (destination.contains("room4")) currentRoomNum = 4;
 
-                        // ✅ 캐시를 이용해 Room 객체를 재사용
+                        // Reuse Room objects using cache
                         room = getOrCreateRoom(destination);
                         hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
                         hero.setRoom(room);
