@@ -1,45 +1,74 @@
 # Comlang_final-project
 
-🧩 Class Structure Overview
+# 🧩 Class Structure Overview
+
 This project implements a modular and object-oriented text-based adventure game. Below is a high-level summary of the class structure:
 
-⚔️ Hero
+---
 
-Represents the player character.
-Fields: position (x, y), HP, equipped weapon, key possession.
-Methods: move(), attack(), pickUp(), takeDamage(), etc.
-👾 Monster
+## 🧍 Hero
+Represents the player character.  
+**Fields:** position `(x, y)`, HP, equipped weapon, key possession  
+**Methods:** `move()`, `attack()`, `pickUp()`, `takeDamage()`, etc.
 
-Represents an enemy in the room.
-Fields: name, position, HP, damage, key drop flag.
-Methods: takeDamage(), dealDamage(), dropsKey().
-🧱 Room
+---
 
-Represents a single room loaded from a CSV.
-Fields: grid, monsters, items, doors, hero spawn position.
-Methods: loadFromCSV(), saveToCSV(), checkInteractions(), display().
-🚪 Door
+## 👾 Monster
+Represents an enemy in the room.  
+**Fields:** name, position, HP, damage, key drop flag  
+**Methods:** `takeDamage()`, `dealDamage()`, `dropsKey()`
 
-Represents a transition point between rooms.
-Fields: position, destination room path, door type ('d' or 'D').
-Methods: isMasterDoor().
-🧪 Item (interface)
+---
 
-Interface for items usable by Hero.
-Methods: use(), getSymbol().
-⚔️ Weapon implements Item
+## 🧱 Room
+Represents a single room loaded from a CSV file.  
+**Fields:** grid, monsters, items, doors, hero spawn position  
+**Methods:**  
+- `loadFromCSV()`  
+- `saveToCSV()`  
+- `checkInteractions()`  
+- `display()`  
 
-Represents a weapon with a name, damage value, and symbol.
-Methods: use(Hero), getSymbol().
-🧴 Potion implements Item
+---
 
-Represents a healing potion.
-Methods: use(Hero), getSymbol().
-🎮 Game
+## 🚪 Door
+Represents a door to another room.  
+**Fields:** position, destination path, door type (`'d'` or `'D'`)  
+**Methods:** `isMasterDoor()`
 
-Main game controller class.
-Handles game loop, room transitions, file loading/saving.
-🚀 Main
+---
 
-Entry point of the program.
-Starts the game.
+## 🧪 Item (interface)
+Interface for usable items.  
+**Methods:** `use(Hero hero)`, `getSymbol()`
+
+---
+
+## ⚔️ Weapon (implements Item)
+Represents a weapon.  
+**Fields:** name, damage, symbol  
+**Methods:** `use(Hero)`, `getSymbol()`
+
+---
+
+## 🧴 Potion (implements Item)
+Represents a healing potion.  
+**Fields:** heal amount, symbol  
+**Methods:** `use(Hero)`, `getSymbol()`
+
+---
+
+## 🎮 Game
+Main controller for the game logic.  
+**Handles:** game loop, transitions, player status, and file I/O
+
+---
+
+## 🚀 Main
+Program entry point.  
+**Starts** the game using `Game.start()`
+
+---
+
+💡 *Designed using modular OOP principles with clear class responsibility separation.*
+
