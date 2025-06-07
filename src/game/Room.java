@@ -318,8 +318,7 @@ public class Room {
     private boolean isAdjacent(Hero h, Monster m) {
         int dx = Math.abs(h.getX() - m.getX());
         int dy = Math.abs(h.getY() - m.getY());
-        return (dx + dy == 1); 
-        
+        return (dx <= 1 && dy <= 1 && (dx + dy > 0));
     }
 
     // Getter for hero spawn X position
