@@ -14,26 +14,19 @@ public class Game {
     private final String runId = "run1";  // Unique run session name
     private final String saveDir = "saves/" + runId + "/";  // Save file directory
     private int currentRoomNum = 1;  // Current room number
-    private Map<String, Room> roomCache = new HashMap<>();
-
-    private Room getOrCreateRoom(String path) {
-        if (!roomCache.containsKey(path)) {
-            roomCache.put(path, new Room(path));
-        }
-        return roomCache.get(path);
-    }
+    private ArrayList<Room> roomList = new ArrayList<>();  
 
     // Current room number
     public void start() {
         System.out.println("=== Welcome to Solo Adventure Maze ===");
+        prepareSaveFolder();    // Copy initial room files into save directory
+        preloadRooms();            
 
-        prepareSaveFolder();  // Copy initial room files into save directory
-
-        room = new Room(saveDir + "room1.csv");  // Copy initial room files into save directory
-        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());  // Place hero
+        room = roomList.get(0);   
+        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());
         hero.setRoom(room); //connect 
 
-        gameLoop();  // Start main game loop
+        gameLoop();   // Start main game loop
     }
 
     // Start main game loop
@@ -51,6 +44,12 @@ public class Game {
     }
 
     // Main game loop: displays map, handles input, interactions, and room transitions
+    private void preloadRooms() {
+        for (int i = 1; i <= 4; i++) {
+            roomList.add(new Room(saveDir + "room" + i + ".csv"));
+        }
+    }
+
     private void gameLoop() {
         while (true) {
             room.display(hero);  // Show current room and hero
@@ -66,11 +65,11 @@ public class Game {
                 case "d": hero.move(1, 0, room); break;
                 case "l": hero.move(0, -1, room); break;
                 case "r": hero.move(0, 1, room); break;
-                case "a": room.attackAdjacentMonster(hero); break; 
+                case "a": room.attackAdjacentMonster(hero); break;
                 default: System.out.println("Invalid input.");
             }
 
-            // // If hero is dead after action, end the game
+            // If hero is dead after action, end the game
             if (hero.isDead()) {
                 System.out.println("Your HP dropped to 0. You have died.");
                 break;
@@ -93,21 +92,20 @@ public class Game {
                             return;
                         }
 
-                        // Update currentRoomNum 
+                        // Update currentRoomNum
                         if (destination.contains("room1")) currentRoomNum = 1;
                         else if (destination.contains("room2")) currentRoomNum = 2;
                         else if (destination.contains("room3")) currentRoomNum = 3;
                         else if (destination.contains("room4")) currentRoomNum = 4;
 
                         // Reuse Room objects using cache
-                        room = getOrCreateRoom(destination);
+                        room = roomList.get(currentRoomNum - 1);
                         hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
                         hero.setRoom(room);
                         break;
-                                }
+                    }
                 }
-            }
-            else if (moveResult.equals("END")) {
+            } else if (moveResult.equals("END")) {
                 System.out.println("You escaped the maze! Game complete!");
                 return;
             }
