@@ -4,39 +4,28 @@ import java.io.*;
 import java.nio.file.*;
 import java.util.*;
 
-/*
- * Main game logic controller.
- */
 public class Game {
-    private Room room;  // Current room instance
-    private Hero hero;  // Current room instance
-    private Scanner scanner = new Scanner(System.in);  // For user input
-    private final String runId = "run1";  // Unique run session name
-    private final String saveDir = "saves/" + runId + "/";  // Save file directory
-    private int currentRoomNum = 1;  // Current room number
-    private Map<String, Room> roomCache = new HashMap<>();
+    private Room room;
+    private Hero hero;
+    private Scanner scanner = new Scanner(System.in);
+    private final String runId = "run1";
+    private final String saveDir = "saves/" + runId + "/";
+    private int currentRoomNum = 1;
 
-    private Room getOrCreateRoom(String path) {
-        if (!roomCache.containsKey(path)) {
-            roomCache.put(path, new Room(path));
-        }
-        return roomCache.get(path);
-    }
+    private ArrayList<Room> roomList = new ArrayList<>();  // ✅ ArrayList로 대체
 
-    // Current room number
     public void start() {
         System.out.println("=== Welcome to Solo Adventure Maze ===");
+        prepareSaveFolder();       // 방 파일 복사
+        preloadRooms();            // ✅ 방 미리 ArrayList에 로드
 
-        prepareSaveFolder();  // Copy initial room files into save directory
+        room = roomList.get(0);    // room1부터 시작
+        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());
+        hero.setRoom(room);
 
-        room = new Room(saveDir + "room1.csv");  // Copy initial room files into save directory
-        hero = new Hero(room.getHeroStartX(), room.getHeroStartY());  // Place hero
-        hero.setRoom(room); //connect 
-
-        gameLoop();  // Start main game loop
+        gameLoop();  // 게임 시작
     }
 
-    // Start main game loop
     private void prepareSaveFolder() {
         try {
             Files.createDirectories(Paths.get(saveDir));
@@ -50,40 +39,41 @@ public class Game {
         }
     }
 
-    // Main game loop: displays map, handles input, interactions, and room transitions
+    // ✅ ArrayList에 방 1~4 미리 넣기
+    private void preloadRooms() {
+        for (int i = 1; i <= 4; i++) {
+            roomList.add(new Room(saveDir + "room" + i + ".csv"));
+        }
+    }
+
     private void gameLoop() {
         while (true) {
-            room.display(hero);  // Show current room and hero
+            room.display(hero);
             System.out.println("HP: " + hero.getHp() + "/25" + " | Weapon: " + hero.getWeaponName() + " | Key: " + (hero.hasKey() ? "YES" : "NO"));
             System.out.print("Enter command (u/d/r/l to move, a to attack, q to quit): ");
             String cmd = scanner.nextLine().toLowerCase();
 
             if (cmd.equals("q")) break;
 
-            // Show current room and hero
             switch (cmd) {
                 case "u": hero.move(-1, 0, room); break;
                 case "d": hero.move(1, 0, room); break;
                 case "l": hero.move(0, -1, room); break;
                 case "r": hero.move(0, 1, room); break;
-                case "a": room.attackAdjacentMonster(hero); break; 
+                case "a": room.attackAdjacentMonster(hero); break;
                 default: System.out.println("Invalid input.");
             }
 
-            // // If hero is dead after action, end the game
             if (hero.isDead()) {
                 System.out.println("Your HP dropped to 0. You have died.");
                 break;
             }
 
-            // Show current room and hero
             String moveResult = room.checkInteractions(hero, saveDir + "room" + currentRoomNum + ".csv");
 
             if (moveResult.equals("NEXT")) {
-                // Save the current room
                 room.saveToCSV(saveDir + "room" + currentRoomNum + ".csv");
 
-                // Find which door is currently located and determine the path to move
                 for (Door d : room.getDoors()) {
                     if (hero.getX() == d.getX() && hero.getY() == d.getY()) {
                         String destination = d.getDestinationPath();
@@ -93,21 +83,20 @@ public class Game {
                             return;
                         }
 
-                        // Update currentRoomNum 
+                        // ✅ 방 번호 갱신
                         if (destination.contains("room1")) currentRoomNum = 1;
                         else if (destination.contains("room2")) currentRoomNum = 2;
                         else if (destination.contains("room3")) currentRoomNum = 3;
                         else if (destination.contains("room4")) currentRoomNum = 4;
 
-                        // Reuse Room objects using cache
-                        room = getOrCreateRoom(destination);
+                        // ✅ roomCache 대신 ArrayList 사용
+                        room = roomList.get(currentRoomNum - 1);
                         hero.setPosition(room.getHeroStartX(), room.getHeroStartY());
                         hero.setRoom(room);
                         break;
-                                }
+                    }
                 }
-            }
-            else if (moveResult.equals("END")) {
+            } else if (moveResult.equals("END")) {
                 System.out.println("You escaped the maze! Game complete!");
                 return;
             }
